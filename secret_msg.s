@@ -12,10 +12,66 @@
 /* Opens file, reads contents and stores them to a memory buffery */
 /* Parmeter: r0 is set to the image file */ 
 /* Paramter: No other paramters set */
+readText:
+	stmfd sp!, {r4,r5,r6,lr}
+
+	ldr  r1, =rmode  
+	bl   fopen
+	mov  r4, r0
+
+@	ldr  r1, =infmt1
+@	ldr  r2, =code
+@	bl   fscanf
+	
+	mov  r0, r4
+	ldr  r1, =infmt1
+	ldr  r2, =debugNum
+@	ldr  r3, =height
+	bl   fscanf
+
+	ldr  r1, =debugNum
+	ldr  r6, [r1]
+@	mov  r0, r4
+@	ldr  r1, =infmt3
+@	ldr  r2, =maxval
+@	bl   fscanf
+
+@	ldr  r2, =width
+@	ldr  r2, [r2]
+@	ldr  r3, =height
+@	ldr  r3, [r3]
+@	mul  r6, r2, r3
+
+@	mov  r0, r6
+@	bl   malloc
+
+@	mov  r5, r0
+@	mov  r1, #1
+@	mov  r2, r6
+@	mov  r3, r4
+@	bl   fread
+
+	mov  r0, r4
+	bl   fclose
+
+	ldr	r0, =outfmt3
+	ldr	r1, =width
+	ldr	r1, #10 
+	bl	printf
+
+	mov  r0, r5
+
+	ldmfd sp!, {r4,r5,r6,lr}
+	mov  pc, lr
+
+/* Function Read Image */
+/* Opens file, reads contents and stores them to a memory buffery */
+/* Parmeter: r0 is set to the image file */ 
+/* Paramter: No other paramters set */
 readimage:
 	stmfd sp!, {r4,r5,r6,lr}
 
-	ldr  r1, =rmode
+	ldr  r1, =rmode  
 	bl   fopen
 	mov  r4, r0
 
@@ -200,16 +256,28 @@ encryptText:
 	/* Store File Pointer */
 	mov  r5, r0		
 
-encryptLoop:
+@ encryptLoop:
 	mov	r0, r5		/* Load File Pointer */
-	ldr	r1, =e_infmt	/* Set Encrpytion Read Format */	
-	ldr	r2, =chValue	/* Read in char value */
+	ldr	r1, =infmt2	/* Set Encrpytion Read Format */	
+	ldr	r2, =charArray	/* Read in char value */
 	bl	fscanf		/* Read Filee */
 	cmp	r0, #1		/* If buffer is empty */
 	bne	endEncrypt
 
-	strb	r2, [r6, r7]	/* Store Value Returned from Scanf to Char Array */
-	beq	encryptLoop		
+	ldr	r0, =outfmt1
+	ldr	r1, =charArray
+	bl	printf	
+
+@	bne	endEncrypt
+
+@	strb	r2, [r6, r7]	/* Store Value Returned from Scanf to Char Array */
+	
+@	add	r7, r7, #1	/* Itterate counter */
+@	cmp	r7, #10
+@	beq	endEncrypt
+
+@	beq	encryptLoop		
+	
 
 endEncrypt:
 	/* Check for End of File */
@@ -251,7 +319,7 @@ main:
 
 	/* Load Text File and Encrypt Text */
 	ldr	r0, =textFile
-	bl	encryptText
+	bl	readText
 
 	/* Insert Text Into Image */
 	mov	r0, r4		/* Move First File Memory Address */
@@ -302,7 +370,7 @@ e_errorMsg:
 
 /* Encryption Input Format */
 e_infmt:
-	.asciz	"%c"
+	.asciz	"%s"
 
 /* TODO: Temporary Text to Test Inserting */
 debugText:
@@ -336,13 +404,18 @@ charArray:
 
 /* Character to Retrieve */
 chValue:
-	.space 1
+	.hword	0
 
 wmode:
 	.asciz  "wb"
 code:
 	.space 3
 	.align 2
+
+/* Image File Width */
+debugNum:
+	.word 0
+
 /* Image File Width */
 width:
 	.word 0
