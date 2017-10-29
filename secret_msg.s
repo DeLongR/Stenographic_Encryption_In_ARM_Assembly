@@ -1,3 +1,5 @@
+@ vim:ft=armv8
+
 	.arch  armv8-a
 	.fpu   neon-fp-armv8
 	.cpu   cortex-a53
@@ -6,6 +8,10 @@
 
 	.text
 
+/* Function Read Image */
+/* Opens file, reads contents and stores them to a memory buffery */
+/* Parmeter: r0 is set to the image file */ 
+/* Paramter: No other paramters set */
 readimage:
 	stmfd sp!, {r4,r5,r6,lr}
 
@@ -95,8 +101,12 @@ writeimage:
 	ldmfd sp!, {r4,r5,r6,r7,lr}
 	mov  pc, lr
 
-morphimage:
-	
+/* Function Add Text To Image */
+/* Opens file, reads contents and stores them to a memory buffery */
+/* Parameter: r0 is set to the allocated memory of the first image */
+/* Parameter: r1 is set to the allocated memory of the text file */ 
+/* Paramter: No other paramters set */
+addTextToImage:
 	stmfd sp!, {r4,r5,r6,r7,r8,r9,r10,r12,lr}
 
 	mov  r4, r0
@@ -170,8 +180,10 @@ donemorph:
 	ldmfd sp!, {r4,r5,r6,r7,r8,r9,r10,r12,lr}
 	mov  pc, lr
 
-
 /* Encrypt Text */
+/* Opens file, reads contents and stores them to a byte array */
+/* Parmeter: r0 is set to the text file */ 
+/* Paramter: No other paramters set */
 encryptText:
 	stmfd sp!, {lr}
 	/* Load File Char Array */
@@ -182,7 +194,7 @@ encryptText:
 
 	/* Open Read File */
 	ldr  r0, =textFile
-	ldr  r1, =rmode
+	ldr  r1, =rmodeText
 	bl   fopen
 
 	/* Store File Pointer */
@@ -190,11 +202,13 @@ encryptText:
 
 encryptLoop:
 	mov	r0, r5		/* Load File Pointer */
-	ldr	r1, =e_infmt	/* Set Encrpytion Format */	
-	bl	fscanf		/* Read Stand Pointer Value */
-	cmp	r0, #1
+	ldr	r1, =e_infmt	/* Set Encrpytion Read Format */	
+	ldr	r2, =chValue	/* Read in char value */
+	bl	fscanf		/* Read Filee */
+	cmp	r0, #1		/* If buffer is empty */
 	bne	endEncrypt
-	strb	r2, [r6, r7]	/* Store Value to Char Array */
+
+	strb	r2, [r6, r7]	/* Store Value Returned from Scanf to Char Array */
 	beq	encryptLoop		
 
 endEncrypt:
@@ -214,37 +228,43 @@ endEncrypt:
 
 /* Main Program Call */
 main:
-	ldr  r0, =imageFile	/* Load Image File */
-	bl   readimage
+	/* Load and read image file */
+	ldr	r0, =imageFile	/* Load Image File */
+	bl	readimage
 
-	mov  r4, r0		/* Save image memory address */
+	mov	r4, r0		/* Save image memory address */
 	
-	mov  r0, r4		/* Free image memory */
-	bl   free
-
 	/* Print Image File Name */
-	ldr  r0, =outfmtImageFN	
-	ldr  r1, =imageFile
-	bl   printf	
+	ldr	r0, =outfmtImageFN	
+	ldr	r1, =imageFile
+	bl	printf	
 
 	/* Print Secret Text File Name */
-	ldr  r0, =outfmtSecretFN	
-	ldr  r1, =textFile
-	bl   printf	
+	ldr	r0, =outfmtSecretFN	
+	ldr	r1, =textFile
+	bl	printf	
 
 	/* Print Secret Image File Name */
-	ldr  r0, =outfmtSecretFN	
-	ldr  r1, =secretImage
-	bl   printf	
+	ldr	r0, =outfmtSecretFN	
+	ldr	r1, =secretImage
+	bl	printf	
 
 	/* Load Text File and Encrypt Text */
-	ldr  r0, =textFile
-	bl   encryptText
+	ldr	r0, =textFile
+	bl	encryptText
+
+	/* Insert Text Into Image */
+	mov	r0, r4		/* Move First File Memory Address */
+	/* TODO: Call Insert Text into Image */
+
+	/* Deallocate memory */
+	mov	r0, r4		/* Free image memory */
+	bl	free
 
 	/* Finish Execution */
-	mov   r0, #0
-	mov   r7, #1
-	svc   #0
+	mov	r0, #0
+	mov	r7, #1
+	svc	#0
 
 	.data
 
@@ -284,6 +304,10 @@ e_errorMsg:
 e_infmt:
 	.asciz	"%c"
 
+/* TODO: Temporary Text to Test Inserting */
+debugText:
+	.asciz "ABCDEFGH"
+
 flushy:
 	.asciz  "\n"
 infmt1:
@@ -299,6 +323,9 @@ outfmt2:
 outfmt3:
 	.asciz	"%i\n"
 
+/* Read Mode Format for Text */
+rmodeText:
+	.asciz	"r"
 /* Read Mode Format */
 rmode:
 	.asciz  "rb"
@@ -306,15 +333,24 @@ rmode:
 /* Store Character Array */
 charArray:
 	.space 120
+
+/* Character to Retrieve */
+chValue:
+	.space 1
+
 wmode:
 	.asciz  "wb"
 code:
 	.space 3
 	.align 2
+/* Image File Width */
 width:
 	.word 0
+
+/* Image File Height */
 height: 
 	.word 0
+
 maxval:
 	.word 0
 alpha:
