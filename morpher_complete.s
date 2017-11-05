@@ -199,9 +199,9 @@ main:
 
 syscomm:   .asciz  "gpicview temp.pgm"
 file1:
-	.asciz	"bigbush.pgm"
+	.asciz	"pepper.pgm"
 file2:
-	.asciz	"obama.pgm"
+	.asciz	"pepper.pgm"
 file3:
 	.asciz	"temp.pgm"
 flushy:

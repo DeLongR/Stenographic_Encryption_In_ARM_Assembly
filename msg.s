@@ -269,6 +269,10 @@ main:
 	mov	r0, r5
 	bl	free
 
+	/* Print Image to Screen */
+	ldr	r0, =syscomm
+	bl	system	 
+
 	/* Finish Execution */
 	mov	r0, #0
 	mov	r7, #1
@@ -277,8 +281,7 @@ main:
 .data
 
 /* System Message */
-syscomm:   
-	.asciz  "gpicview marcie_secret.pgm"
+syscomm:   	.asciz  "gpicview marcie_secret.pgm"
 
 /*************************** Constants ***** **********************/
 /* Original Image File */
@@ -342,7 +345,7 @@ wmode:		.asciz  "wb"
 debugNum:	.word 0
 
 /* Char Array */
-charArray:	.space 120
+charArray:	.space 1000
 
 /* Length of Message */
 msgLength:	.word 0
