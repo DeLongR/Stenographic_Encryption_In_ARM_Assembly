@@ -110,7 +110,7 @@ debug3:
 outmLoop:
 	/* Create Msg Size */
 	mov 	r2, #0			/* Msg Lengthe */
-	mov	r5, #4			/* Itterator Byte */
+	mov	r5, #0			/* Itterator Byte */
 
 inmLoop:	
 	/* Load First Byte */
@@ -529,36 +529,64 @@ debug90:
 /* Opens memory pointer, reads contents and writes them to file */
 /* Parmeter: r0 is set to the text file name */ 
 /* Paramter: r1 is set to the memory pointer of the secret text */
-/* Return: r0 memory pointerd */
+/* Return: no return */
 printSecret:
-	stmfd sp!, {r4,r5,r6,r7,lr}
+	stmfd sp!, {r4,r5,r6,r7,r8,lr}
+	mov	r8, r0			/* Store Text Pointer */
 	mov	r6, r1			/* Move Secret Message Memory Address */
 	mov	r4, #0			/* Itterator for Moving Through Text File */
 	ldr 	r5, =msgLength		/* Length of Message */
 	ldr	r5, [r5]
+	ldr	r7, =keyValue		/* Key Value */
+	ldr	r7, [r7]
 
-	/* Print Key Value */
-	ldr	r0, =outfmtKey
-	ldr	r1, =keyValue		/* Print Key Value */
-	ldr	r1, [r1]
-	bl	printf
-
-	/* Print Key Value */
-	ldr	r0, =outfmtLength
-	mov	r1, r5			/*Print Message Length */
-	bl	printf
-
-	/* Print Each Value in Secret Message */
-psLoop:
-	ldr	r0, =outfmtC
-	ldrb	r1, [r6, r4]
-	bl	printf
+	/* Open File */
+	mov	r0, r8
+	ldr  	r1, =wmode
+	bl   	fopen
 	
+	mov  	r8, r0			/* Store File Pointer to Memory */
+
+	/* Print Key Value */
+	mov	r0, r8
+	ldr	r1, =outfmtKey
+	mov	r2, r7			/* Print Key Value */
+	bl   	fprintf
+
+	/* Print Key Value */
+	mov	r0, r8
+	ldr	r1, =outfmtKey
+	mov	r2, r5			/*Print Message Length */
+	bl	fprintf
+
+/* Remove Secret Message from Message */
+psLoop:
+	mov	r0, r8
+	ldr	r1, =outfmtChar
+	ldrb	r2, [r6, r4]
+	subs	r2, r2, r7	
+	cmp	r2, #0
+	addlt	r2, r2, #128	
+	bl	fprintf
+		
 	add	r4, r4, #1
 	cmp	r4, r5
 	blt	psLoop	
+/* Finish Secret Message */
+debug75:
 
-	ldmfd sp!, {r4,r5,r6,r7,lr}
+	/* Write Memory Buffer Out to File */
+@	mov  	r0, r8			/* Reload Text Buffer */
+@	mov  	r1, #1			/* Size of */
+@	mov 	r2, r5			/* Specify Size */
+@	mov  	r3, r8			/* Reload File Pointer Address */
+@	bl   	fwrite
+
+	/* Close New File */
+	mov  	r0, r8
+	bl   	fclose
+
+	ldmfd sp!, {r4,r5,r6,r7,r8,lr}
 	mov  pc, lr
 
 
@@ -606,9 +634,8 @@ main:
 	bl	getMessage
 	mov	r8, r0			/* Store Secret Message Memory */
 
-	/* TODO Decode Secret Message */
-
 	/* Print Secret Message */
+	ldr	r0, =stegoText
 	mov	r1, r8			/* Restore Secret Message Memory */
 	bl	printSecret
 
@@ -659,6 +686,9 @@ maskTwoDigit:	.word 0xFFFC
 /* Image with Secret Message */
 secretImage:	.asciz	"columns_secret.pgm"
 
+/* Stego Message */
+stegoText:	.asciz "stego.txt"
+
 /********************* In and Out Formats **********************/
 /* Output Format for Image File Name */
 outfmtImageFN:		.asciz	"Image File Name: %s \n"
@@ -674,6 +704,9 @@ outfmtKey:		.asciz	"Key Value equals %i\n"
 
 /* Format for Printing Out Output Length */
 outfmtLength:		.asciz	"Secret Message Length %i\n"
+
+/* Format for Printing Out Characters */
+outfmtChar:		.asciz	"%c"
 
 /* Error Message for End of File */
 e_errorMsg:		.asciz	"Encryption: Error message \n"	
