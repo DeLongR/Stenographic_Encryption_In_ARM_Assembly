@@ -1,4 +1,4 @@
-@ vim:ft=armv8
+@ vim:ft=arm
 
 	.arch  armv8-a
 	.fpu   neon-fp-armv8
@@ -7,6 +7,151 @@
 	.global main
 
 	.text
+
+/* Function Read Secret Messages */
+/* Opens Reads Secret Message from Image */
+/* Parameter: r0 is set to the memory buffer of image */
+/* Return: r0 memory buffer of text */
+getMessage:
+	stmfd 	sp!, {r4,r5,r6,r7,r8,r9,lr}
+
+	/* Store Key Value */
+	ldr 	r2, =keyValue
+	ldr	r2, [r2]		/*Store Key Value */
+
+	mov	r6, r0			/* Store Image Memory Buffer */
+	mov	r10, #0			/* Itterator Image File */
+	mov	r7, #0			/* Multiplier */
+	mov	r8, #0			/* Storage Memory Address of Text File */
+
+	/* Create Key Value Storage */
+	mov 	r2, #0			/* Key Value */
+	mov	r5, #0			/* Itterator Byte */
+debug1:
+kLoop:	
+	/* Load First Byte */
+	ldrb	r0, [r6, r10]		/* Load Byte of Memory */
+	cmp	r0, #32			/* Compare with Space if not space move on */
+	beq	kSkip
+	cmp	r0, #10			/* Compare with New Line if not new line move onn*/
+	beq	kSkip
+
+	/* Isolate Relevant Bits */
+	mov	r9, #3
+	and	r0, r0, r9		/* And Image Byte with Bit Mask 00000011 */
+	
+	/* Left Shift The r0 by the size of the itterator times 2 */
+	mov	r7, #2
+	mul	r7, r5, r7
+	mov	r0, r0, lsl r7
+	
+	/* Pass the The Least two significant digits of stored number  */
+	orr	r2, r2, r0		/* Or Bit Mask with Relevant Bits **/
+
+	/* Itterate Text */
+	add	r5, r5, #1
+kSkip:
+	/* Itterate Image First Byte by Two Two always just to least significant digit */
+	add	r10, r10, #1	
+	cmp	r5, #4			/* Check for four byte end */
+	blt	kLoop
+
+	/* Store Key Value */
+	ldr 	r3, =keyValue
+	strb	r2, [r3]		/*Store Key Value */
+
+	/* Create Msg Size */
+	mov 	r2, #0			/* Msg Lengthe */
+	mov	r5, #0			/* Itterator Byte */
+
+mLoop:	
+	/* Load First Byte */
+	ldrb	r0, [r6, r10]		/* Load Byte of Memory */
+	cmp	r0, #32			/* Compare with Space if not space move on */
+	beq	mSkip
+	cmp	r0, #10			/* Compare with New Line if not new line move onn*/
+	beq	mSkip
+
+	/* Isolate Relevant Bits */
+	mov	r9, #3
+	and	r0, r0, r9		/* And Image Byte with Bit Mask 00000011 */
+	
+	/* Left Shift The r0 by the size of the itterator times 2 */
+	mov	r7, #2
+	mul	r7, r5, r7
+	mov	r0, r0, lsl r7
+	
+	/* Pass the The Least two significant digits of stored number  */
+	orr	r2, r2, r0		/* Or Bit Mask with Relevant Bits **/
+
+	/* Itterate Text */
+	add	r5, r5, #1
+mSkip:
+	/* Itterate Image First Byte by Two Two always just to least significant digit */
+	add	r10, r10, #1	
+	cmp	r5, #4			/* Check for four byte end */
+	blt	mLoop
+debug3:
+	/* Store Msg Length  */
+	ldr 	r3, =msgLength
+	strb	r2, [r3]		/*Store Msg Length */
+
+	/* Based on Msg Length */
+	mov  	r0, r2
+	bl   	malloc
+	mov  	r8, r0		/* Store Memory Pointer */
+
+/* Read Message From Outer Loop */
+	/* Retrieve Msg Length  */
+	ldr 	r3, =msgLength
+	ldr	r4, [r3]		/*Store Msg Length */
+	mov	r11, #0			/* Msg Length Counter */
+
+outmLoop:
+	/* Create Msg Size */
+	mov 	r2, #0			/* Msg Lengthe */
+	mov	r5, #4			/* Itterator Byte */
+
+inmLoop:	
+	/* Load First Byte */
+	ldrb	r0, [r6, r10]		/* Load Byte of Memory */
+	cmp	r0, #32			/* Compare with Space if not space move on */
+	beq	inmSkip
+	cmp	r0, #10			/* Compare with New Line if not new line move onn*/
+	beq	inmSkip
+
+	/* Isolate Relevant Bits */
+	mov	r9, #3
+	and	r0, r0, r9		/* And Image Byte with Bit Mask 00000011 */
+	
+	/* Left Shift The r0 by the size of the itterator times 2 */
+	mov	r7, #2
+	mul	r7, r5, r7
+	mov	r0, r0, lsl r7
+	
+	/* Pass the The Least two significant digits of stored number  */
+	orr	r2, r2, r0		/* Or Bit Mask with Relevant Bits **/
+
+	/* Itterate Text */
+	add	r5, r5, #1
+inmSkip:
+	/* Itterate Image First Byte by Two Two always just to least significant digit */
+	add	r10, r10, #1	
+	cmp	r5, #4			/* Check for four byte end */
+	blt	inmLoop
+
+	/* Store Message to Memory */
+	strb	r2, [r8, r11]
+		
+	add	r11, r11, #1		/* Increment outer loop */
+	cmp	r11, r4
+	ble	outmLoop
+	
+	/* Return Text Memory */
+	mov	r0, r8	
+
+	ldmfd 	sp!, {r4,r5,r6,r7,r8,r9,lr}
+	mov  	pc, lr
 
 /* Function Insert Secret Messagee */
 /* Opens file stores headers and memory buffery */
@@ -58,7 +203,8 @@ keySkip:
 	/* Itterate Image First Byte by Two Two always just to least significant digit */
 	add	r10, r10, #1	
 	cmp	r5, r4			/* Check for four byte end */
-	ble	keyLoop
+	blt	keyLoop
+
 
 	/* Set Up Conditions for Message Size */
 	mov	r5, #0			/* Reset R5 */
@@ -96,8 +242,9 @@ lenSkip:
 	/* Itterate Image First Byte by Two Two always just to least significant digit */
 	add	r10, r10, #1	
 	cmp	r5, r4			/* Check for four byte end */
-	ble	lenLoop
+	blt	lenLoop
 
+debug88:
 /* Outer loop for actual msg */
 	ldr	r11, =msgLength		/* Load Message Length */
 	ldr	r11, [r11]
@@ -137,7 +284,7 @@ msgSkip:
 	/* Itterate Image First Byte by Two Two always just to least significant digit */
 	add	r10, r10, #1	
 	cmp	r5, r4			/* Check for four byte end */
-	ble	msgLoop
+	blt	msgLoop
 
 	/* Jump back to top of outer loop */
 	add 	r8, r8, #1		/* Itterate text file counter */
@@ -294,12 +441,16 @@ encryptText:
 	bl	rand		/* Generate random number */
 	ands	r7, r0, r6	/* Store value of bit mask and rand */	
 
+/* TODO Debug Delete for Later Use */
+	mov	r7, #3	
+
 	/* Store Encryption Key */
 	ldr	r8, =keyValue
 	str	r7, [r8]	
 
 	mov	r1, #0		/* Iterator for Counting Bytes Transformed */
 	mov 	r0, r4		/* Move memory address */
+debug89:
 encryptLoop:
 	ldrb	r3, [r0, r1]	/* Load char value from memory buffery */ 
 	add	r3, r3, r7	/* Add random value to number pulled from memory */
@@ -367,12 +518,49 @@ readSecret:
 	
 	mov	r0, r6
 	bl	fclose		/* Close file */
-
+debug90:
 	/* Return Memory Pointer */
 	mov	r0, r5
 
 	ldmfd sp!, {r4,r5,r6,r7,lr}
 	mov  pc, lr
+
+/* Print Secret Message Function */
+/* Opens memory pointer, reads contents and writes them to file */
+/* Parmeter: r0 is set to the text file name */ 
+/* Paramter: r1 is set to the memory pointer of the secret text */
+/* Return: r0 memory pointerd */
+printSecret:
+	stmfd sp!, {r4,r5,r6,r7,lr}
+	mov	r6, r1			/* Move Secret Message Memory Address */
+	mov	r4, #0			/* Itterator for Moving Through Text File */
+	ldr 	r5, =msgLength		/* Length of Message */
+	ldr	r5, [r5]
+
+	/* Print Key Value */
+	ldr	r0, =outfmtKey
+	ldr	r1, =keyValue		/* Print Key Value */
+	ldr	r1, [r1]
+	bl	printf
+
+	/* Print Key Value */
+	ldr	r0, =outfmtLength
+	mov	r1, r5			/*Print Message Length */
+	bl	printf
+
+	/* Print Each Value in Secret Message */
+psLoop:
+	ldr	r0, =outfmtC
+	ldrb	r1, [r6, r4]
+	bl	printf
+	
+	add	r4, r4, #1
+	cmp	r4, r5
+	blt	psLoop	
+
+	ldmfd sp!, {r4,r5,r6,r7,lr}
+	mov  pc, lr
+
 
 /* Main Program Call */
 main:
@@ -409,9 +597,20 @@ main:
 	bl	encryptText	
 
 	/* Add encrypted text */
-	mov	r0, r7			/* Restore Image Pointer */
+	mov	r0, r7			/* Restore Image Memory */
 	mov	r1, r6			/* Restore Text Memory */
 	bl	insertMessage	
+
+	/* Retrieve Secret Message */
+	mov	r0, r7
+	bl	getMessage
+	mov	r8, r0			/* Store Secret Message Memory */
+
+	/* TODO Decode Secret Message */
+
+	/* Print Secret Message */
+	mov	r1, r8			/* Restore Secret Message Memory */
+	bl	printSecret
 
 	/* Create New Image */
 	ldr	r0, =secretImage	/* Load Secret Image File */
@@ -424,6 +623,10 @@ main:
 
 	/* Free Text Memory */
 	mov	r0, r6
+	bl	free
+
+	/* Free Secret Text Memory */
+	mov	r0, r8
 	bl	free
 
 	/* Print Image to Screen */
@@ -465,6 +668,12 @@ outfmtSecretFN:		.asciz	"Secret Text File Name: %s \n"
 
 /* Output Format for Secret Text File Name */
 outfmtSecretImageFN:	.asciz	"Secret Image File Name: %s \n"
+
+/* Format for Printing Out Key Value */
+outfmtKey:		.asciz	"Key Value equals %i\n"
+
+/* Format for Printing Out Output Length */
+outfmtLength:		.asciz	"Secret Message Length %i\n"
 
 /* Error Message for End of File */
 e_errorMsg:		.asciz	"Encryption: Error message \n"	
