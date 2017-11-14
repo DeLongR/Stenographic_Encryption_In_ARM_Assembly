@@ -8,286 +8,48 @@
 
 	.text
 
-/* Function Read Secret Messages */
-/* Opens Reads Secret Message from Image */
-/* Parameter: r0 is set to the memory buffer of image */
-/* Return: r0 memory buffer of text */
-getMessage:
-	stmfd 	sp!, {r4,r5,r6,r7,r8,r9,r10,lr}
-
-	/* Store Key Value */
-	ldr 	r2, =keyValue
-	ldr	r2, [r2]		/*Store Key Value */
-
-	mov	r6, r0			/* Store Image Memory Buffer */
-	mov	r10, #0			/* Itterator Image File */
-	mov	r7, #0			/* Multiplier */
-	mov	r8, #0			/* Storage Memory Address of Text File */
-
-	/* Create Key Value Storage */
-	mov 	r2, #0			/* Key Value */
-	mov	r5, #0			/* Itterator Byte */
-
-kLoop:	
-	/* Load First Byte */
-	ldrb	r0, [r6, r10]		/* Load Byte of Memory */
-	cmp	r0, #32			/* Compare with Space if not space move on */
-	beq	kSkip
-	cmp	r0, #10			/* Compare with New Line if not new line move onn*/
-	beq	kSkip
-
-	/* Isolate Relevant Bits */
-	mov	r9, #3
-	and	r0, r0, r9		/* And Image Byte with Bit Mask 00000011 */
-	
-	/* Left Shift The r0 by the size of the itterator times 2 */
-	mov	r7, #2
-	mul	r7, r5, r7
-	mov	r0, r0, lsl r7
-	
-	/* Pass the The Least two significant digits of stored number  */
-	orr	r2, r2, r0		/* Or Bit Mask with Relevant Bits **/
-
-	/* Itterate Text */
-	add	r5, r5, #1
-kSkip:
-	/* Itterate Image First Byte by Two Two always just to least significant digit */
-	add	r10, r10, #1	
-	cmp	r5, #4			/* Check for four byte end */
-	blt	kLoop
-
-	/* Store Key Value */
-	ldr 	r3, =keyValue
-	strb	r2, [r3]		/*Store Key Value */
-
-	/* Create Msg Size */
-	mov 	r2, #0			/* Msg Lengthe */
-	mov	r5, #0			/* Itterator Byte */
-
-mLoop:	
-	/* Load First Byte */
-	ldrb	r0, [r6, r10]		/* Load Byte of Memory */
-	cmp	r0, #32			/* Compare with Space if not space move on */
-	beq	mSkip
-	cmp	r0, #10			/* Compare with New Line if not new line move onn*/
-	beq	mSkip
-
-	/* Isolate Relevant Bits */
-	mov	r9, #3
-	and	r0, r0, r9		/* And Image Byte with Bit Mask 00000011 */
-	
-	/* Left Shift The r0 by the size of the itterator times 2 */
-	mov	r7, #2
-	mul	r7, r5, r7
-	mov	r0, r0, lsl r7
-	
-	/* Pass the The Least two significant digits of stored number  */
-	orr	r2, r2, r0		/* Or Bit Mask with Relevant Bits **/
-
-	/* Itterate Text */
-	add	r5, r5, #1
-mSkip:
-	/* Itterate Image First Byte by Two Two always just to least significant digit */
-	add	r10, r10, #1	
-	cmp	r5, #4			/* Check for four byte end */
-	blt	mLoop
-
-	/* Store Msg Length  */
-	ldr 	r3, =msgLength
-	strb	r2, [r3]		/*Store Msg Length */
-
-	/* Based on Msg Length */
-	mov  	r0, r2
-	bl   	malloc
-	mov  	r8, r0		/* Store Memory Pointer */
-
-/* Read Message From Outer Loop */
-	/* Retrieve Msg Length  */
-	ldr 	r3, =msgLength
-	ldr	r4, [r3]		/*Store Msg Length */
-	mov	r11, #0			/* Msg Length Counter */
-
-outmLoop:
-	/* Create Msg Size */
-	mov 	r2, #0			/* Msg Lengthe */
-	mov	r5, #0			/* Itterator Byte */
-
-inmLoop:	
-	/* Load First Byte */
-	ldrb	r0, [r6, r10]		/* Load Byte of Memory */
-	cmp	r0, #32			/* Compare with Space if not space move on */
-	beq	inmSkip
-	cmp	r0, #10			/* Compare with New Line if not new line move onn*/
-	beq	inmSkip
-
-	/* Isolate Relevant Bits */
-	mov	r9, #3
-	and	r0, r0, r9		/* And Image Byte with Bit Mask 00000011 */
-	
-	/* Left Shift The r0 by the size of the itterator times 2 */
-	mov	r7, #2
-	mul	r7, r5, r7
-	mov	r0, r0, lsl r7
-	
-	/* Pass the The Least two significant digits of stored number  */
-	orr	r2, r2, r0		/* Or Bit Mask with Relevant Bits **/
-
-	/* Itterate Text */
-	add	r5, r5, #1
-inmSkip:
-	/* Itterate Image First Byte by Two Two always just to least significant digit */
-	add	r10, r10, #1	
-	cmp	r5, #4			/* Check for four byte end */
-	blt	inmLoop
-
-	/* Store Message to Memory */
-	strb	r2, [r8, r11]
-		
-	add	r11, r11, #1		/* Increment outer loop */
-	cmp	r11, r4
-	ble	outmLoop
-	
-	/* Return Text Memory */
-	mov	r0, r8	
-
-	ldmfd 	sp!, {r4,r5,r6,r7,r8,r9,r10,lr}
-	mov  	pc, lr
-
-/* Read Message Byte by Byte */
-/* TODO maybe */
-
-/* Function Insert Secret Messagee */
+/* Function Insert Secret Message */
 /* Opens file stores headers and memory buffery */
 /* Parameter: r0 is set to the memory buffer of image */ 
 /* Parameter: r1 is set to the memory buffer of text file */
 /* Return: r0 memory bugger of image */
 insertMessage:
-	stmfd 	sp!, {r4,r5,r6,r7,r8,r9,lr}
+	stmfd 	sp!, {r4,r5,r6,r7,r8,r9,r10,r11,lr}
 
 	mov	r6, r0			/* Store Image Memory Buffer */
 	mov  	r7, r1			/* Store Memory Buffer of Text */
 	mov	r8, #0			/* Itterator Text Filek */
-	mov	r9, #252		/* Store bit mask */
 	mov	r10, #0			/* Itterator Image File */
-	mov	r5, #0			/* Itterator Byte */
 
-	/* Store Key Value to Image Memory */
-	ldr 	r2, =keyValue
-	ldr	r2, [r2]		/* Load Key Value */	
-	mov	r4, #4			/* Message size in two bit increments */
+	/* Function Insert Byte */
+	mov	r0, r6			/* r0 is set to the memory buffer of image */ 
+	mov	r1, r10			/* r1 is set to the itterator of text file */
+	ldr	r2, =keyValue
+	ldr	r2, [r2]		/* r2 is set to value to store */
+	bl	insertByte
+	mov	r10, r0			/* Store Size after insertion */
 
-keyLoop:	
-	/* Load First Byte */
-	ldrb	r0, [r6, r10]		/* Load Byte of Memory */
-	cmp	r0, #32			/* Compare with Space if not space move on */
-	beq	keySkip
-	cmp	r0, #10			/* Compare with New Line if not new line move onn*/
-	beq	keySkip
-
-	/* Split Key Value Lower */
-	mov	r9, #252
-	orr	r3, r2, r9		/* Or Key Value with Bit Mask 11111100 */
-		
-	/* Alter last two significant digits of number pulled */
-	mov	r9, #3
-	orr	r0, r0, r9		/* Or Bit Mask with 0011 */
+	/* Function Insert Byte */
+	mov	r0, r6			/* r0 is set to the memory buffer of image */ 
+	mov	r1, r10			/* r1 is set to the itterator of text file */
+	ldr	r2, =msgLength
+	ldr	r2, [r2]		/* r2 is set to value to store */
+	bl	insertByte
+	mov	r10, r0			/* Store Size after insertion */
 	
-	and	r0, r0, r3		/* And Bit Mask with Key Value Lower */	
-
-	/* Store First Byte */
-	strb	r0, [r6, r10]		/* Store Byte Back into Memory */
-
-	/* Split Key Value Upper */
-	mov	r2, r2, lsr #2 		/* Right Shift by 2 Key Value  */
-
-	/* Itterate Text */
-	add	r5, r5, #1
-keySkip:
-	/* Itterate Image First Byte by Two Two always just to least significant digit */
-	add	r10, r10, #1	
-	cmp	r5, r4			/* Check for four byte end */
-	blt	keyLoop
-
-
-	/* Set Up Conditions for Message Size */
-	mov	r5, #0			/* Reset R5 */
-	ldr	r2, =msgLength		/* Load Message Length */
-	ldr	r2, [r2]		
-	mov	r4, #4			/* Message Length in two bit increments */	
-
-lenLoop:	
-	/* Load First Byte */
-	ldrb	r0, [r6, r10]		/* Load Byte of Memory */
-	cmp	r0, #32			/* Compare with Space if not space move on */
-	beq	lenSkip
-	cmp	r0, #10			/* Compare with New Line if not new line move onn*/
-	beq	lenSkip
-
-	/* Split Key Value Lower */
-	mov	r9, #252
-	orr	r3, r2, r9		/* Or Key Value with Bit Mask 11111100 */
-		
-	/* Alter last two significant digits of number pulled */
-	mov	r9, #3
-	orr	r0, r0, r9		/* Or Bit Mask with 0011 */
-	
-	and	r0, r0, r3		/* And Bit Mask with Key Value Lower */	
-
-	/* Store First Byte */
-	strb	r0, [r6, r10]		/* Store Byte Back into Memory */
-
-	/* Split Key Value Upper */
-	mov	r2, r2, lsr #2 		/* Right Shift by 2 Key Value  */
-
-	/* Itterate Text */
-	add	r5, r5, #1
-lenSkip:
-	/* Itterate Image First Byte by Two Two always just to least significant digit */
-	add	r10, r10, #1	
-	cmp	r5, r4			/* Check for four byte end */
-	blt	lenLoop
-
-/* Outer loop for actual msg */
+	/* Outer loop for actual msg */
 	ldr	r11, =msgLength		/* Load Message Length */
 	ldr	r11, [r11]
 	mov	r8, #0			/*Set external text loop counter */
 msgOuterLoop:
 	/* Set Up Conditions for Message Size */
-	mov	r5, #0			/* Reset R5 */
+	/* Function Insert Byte */
+	mov	r0, r6			/* r0 is set to the memory buffer of image */ 
+	mov	r1, r10			/* r1 is set to the itterator of text file */
 	ldrb	r2, [r7, r8]		/* Load Text File Byte */	
-	mov	r4, #4			/* Message Length in two bit increments */	
-msgLoop:	
-	/* Load First Byte */
-	ldrb	r0, [r6, r10]		/* Load Byte of Memory */
-	cmp	r0, #32			/* Compare with Space if not space move on */
-	beq	msgSkip
-	cmp	r0, #10			/* Compare with New Line if not new line move onn*/
-	beq	msgSkip
-
-	/* Split Key Value Lower */
-	mov	r9, #252
-	orr	r3, r2, r9		/* Or Key Value with Bit Mask 11111100 */
-		
-	/* Alter last two significant digits of number pulled */
-	mov	r9, #3
-	orr	r0, r0, r9		/* Or Bit Mask with 0011 */
+	bl	insertByte
+	mov	r10, r0			/* Store Size after insertion */
 	
-	and	r0, r0, r3		/* And Bit Mask with Key Value Lower */	
-
-	/* Store First Byte */
-	strb	r0, [r6, r10]		/* Store Byte Back into Memory */
-
-	/* Split Key Value Upper */
-	mov	r2, r2, lsr #2 		/* Right Shift by 2 Key Value  */
-
-	/* Itterate Text */
-	add	r5, r5, #1
-msgSkip:
-	/* Itterate Image First Byte by Two Two always just to least significant digit */
-	add	r10, r10, #1	
-	cmp	r5, r4			/* Check for four byte end */
-	blt	msgLoop
-
 	/* Jump back to top of outer loop */
 	add 	r8, r8, #1		/* Itterate text file counter */
 	cmp	r8, r11
@@ -296,12 +58,65 @@ msgSkip:
 	/* Return Image Memory */
 	mov	r0, r6
 
-	ldmfd 	sp!, {r4,r5,r6,r7,r8,r9,lr}
+	ldmfd 	sp!, {r4,r5,r6,r7,r8,r9,r10,r11,lr}
 	mov  	pc, lr
 
+/* Function Insert Byte */
+/* Opens file stores headers and memory buffery */
+/* Parameter: r0 is set to the memory buffer of image */ 
+/* Parameter: r1 is set to the itterator of text file */
+/* Parameter: r2 is set to value to store */
+/* Return: r0 memory bugger of image */
+insertByte:
+	stmfd 	sp!, {r4,r5,r6,r7,r8,r9,r10,lr}
+
+	mov	r6, r0			/* Store Image Memory Buffer */
+	mov	r10, r1 		/* Itterator Image File */
+	
+	mov	r8, #0			/* Itterator Text File */
+	mov	r9, #252		/* Store bit mask */
+	mov	r5, #0			/* Itterator Byte */
+
+ibLoop:	
+	/* Load First Byte */
+	ldrb	r0, [r6, r10]		/* Load Byte of Memory */
+	cmp	r0, #32			/* Compare with Space if not space move on */
+	beq	ibSkip
+	cmp	r0, #10			/* Compare with New Line if not new line move onn*/
+	beq	ibSkip
+
+	/* Split Key Value Lower */
+	mov	r9, #252
+	orr	r3, r2, r9		/* Or Key Value with Bit Mask 11111100 */
+		
+	/* Alter last two significant digits of number pulled */
+	mov	r9, #3
+	orr	r0, r0, r9		/* Or Bit Mask with 0011 */
+	
+	and	r0, r0, r3		/* And Bit Mask with Key Value Lower */	
+
+	/* Store First Byte */
+	strb	r0, [r6, r10]		/* Store Byte Back into Memory */
+
+	/* Split Key Value Upper */
+	mov	r2, r2, lsr #2 		/* Right Shift by 2 Key Value  */
+
+	/* Itterate Text */
+	add	r5, r5, #1
+ibSkip:
+	/* Itterate Image First Byte by Two Two always just to least significant digit */
+	add	r10, r10, #1	
+	cmp	r5, #4 			/* Check for four byte end */
+	blt	ibLoop
+
+	/* Return Values */
+	mov	r0, r10			/* Return Text Itterator */
+
+	ldmfd 	sp!, {r4,r5,r6,r7,r8,r9,r10,lr}
+	mov  	pc, lr
 
 /* Function Write Image */
-/* Opens file stores headers and memory buffery */
+/* Opens file stores headers and memory buffer */
 /* Parameter: r0 is set to the new image file */ 
 /* Parameter: r1 is set to the memory buffer */
 /* Return: none */
@@ -533,63 +348,6 @@ readError:
 	ldmfd sp!, {r4,r5,r6,r7,lr}
 	mov  pc, lr
 
-/* Print Secret Message Function */
-/* Opens memory pointer, reads contents and writes them to file */
-/* Parmeter: r0 is set to the text file name */ 
-/* Paramter: r1 is set to the memory pointer of the secret text */
-/* Return: no return */
-printSecret:
-	stmfd sp!, {r4,r5,r6,r7,r8,lr}
-	mov	r8, r0			/* Store Text Pointer */
-	mov	r6, r1			/* Move Secret Message Memory Address */
-	mov	r4, #0			/* Itterator for Moving Through Text File */
-	ldr 	r5, =msgLength		/* Length of Message */
-	ldr	r5, [r5]
-	ldr	r7, =keyValue		/* Key Value */
-	ldr	r7, [r7]
-
-	/* Open File */
-	mov	r0, r8
-	ldr  	r1, =wmode
-	bl   	fopen
-	
-	mov  	r8, r0			/* Store File Pointer to Memory */
-
-	/* Print Key Value */
-	mov	r0, r8
-	ldr	r1, =outfmtKey
-	mov	r2, r7			/* Print Key Value */
-	bl   	fprintf
-
-	/* Print Message Lengthe */
-	mov	r0, r8
-	ldr	r1, =outfmtLength
-	mov	r2, r5			/*Print Message Length */
-	bl	fprintf
-
-	/* Remove Secret Message from Message */
-psLoop:
-	mov	r0, r8
-	ldr	r1, =outfmtChar
-	ldrb	r2, [r6, r4]
-	subs	r2, r2, r7	
-	cmp	r2, #0
-	addlt	r2, r2, #127	
-	bl	fprintf
-		
-	add	r4, r4, #1
-	cmp	r4, r5
-	blt	psLoop	
-	/* Finish Secret Message */
-
-
-	/* Close New File */
-	mov  	r0, r8
-	bl   	fclose
-
-	ldmfd 	sp!, {r4,r5,r6,r7,r8,lr}
-	mov  	pc, lr
-
 /* Check if Message is too Large */
 /* Checks Message Length against Image Size */
 /* Parmeter: r0 is set to message length */ 
@@ -656,16 +414,6 @@ main:
 	mov	r1, r6			/* Restore Text Memory */
 	bl	insertMessage	
 
-	/* Retrieve Secret Message */
-	mov	r0, r7
-	bl	getMessage
-	mov	r8, r0			/* Store Secret Message Memory */
-
-	/* Print Secret Message */
-	ldr	r0, =stegoText
-	mov	r1, r8			/* Restore Secret Message Memory */
-	bl	printSecret
-
 	/* Create New Image */
 	ldr	r0, =secretImage	/* Load Secret Image File */
 	mov	r1, r7			/* Load Allocated Memory */ 
@@ -674,10 +422,6 @@ main:
 	/* Print Image to Screen */
 	ldr	r0, =syscomm
 	bl	system	 
-
-	/* Free Secret Text Memory */
-	mov	r0, r8
-	bl	free
 
 	/* Free Text Memory */
 	mov	r0, r6
