@@ -228,7 +228,6 @@ psLoop:
 	blt	psLoop	
 	/* Finish Secret Message */
 
-
 	/* Close New File */
 	mov  	r0, r8
 	bl   	fclose
@@ -240,7 +239,7 @@ psLoop:
 main:
 	/* r8 Secret Message Memory */
 	/* Print Secret Image File Name */
-	ldr	r0, =outfmtSecretFN	
+	ldr	r0, =outfmtSecretImageFN	
 	ldr	r1, =secretImage
 	bl	printf	
 
@@ -267,6 +266,11 @@ main:
 	mov	r0, r7
 	bl	free
 
+	/* Print Secret Image File Name */
+	ldr	r0, =outfmtSecretFN	
+	ldr	r1, =stegoText
+	bl	printf
+
 	/* Finish Execution */
 	mov	r0, #0
 	mov	r7, #1
@@ -274,16 +278,7 @@ main:
 
 .data
 
-/* System Message */
-syscomm:   	.asciz  "gpicview columns_secret.pgm"
-
 /*************************** Constants ***** **********************/
-/* Original Image File */
-imageFile:	.asciz	"columns.pgm"
-
-/* Secret Message Text File */
-textFile:	.asciz	"secret.txt"
-
 /* Bit Mask to 127 */
 mask:		.word 0x0000007f
 
@@ -291,13 +286,10 @@ mask:		.word 0x0000007f
 maskTwoDigit:	.word 0xFFFC
 
 /* Image with Secret Message */
-secretImage:	.asciz	"columns_secret.pgm"
+secretImage:	.asciz	"secret.pgm"
 
 /* Stego Message */
 stegoText:	.asciz "stego.txt"
-
-/* Error Message */
-error_msg_size:	.asciz "Error Secret Message File too Large"
 
 /********************* In and Out Formats **********************/
 /* Output Format for Image File Name */
@@ -353,12 +345,6 @@ rmode:		.asciz  "rb"
 wmode:		.asciz  "wb"
 
 /********************* Values to Stores **********************/
-/* TODO Char to Retrieve */
-debugNum:	.word 0
-
-/* TODO Char Array */
-charArray:	.space 1000
-
 /* Length of Message */
 msgLength:	.word 0
 
@@ -380,16 +366,4 @@ maxSize:	.word 0
 /* Code for Storing Initial PGM File Parameters */
 code:		.space 3
 		.align 2
-
-/* Perhaps Unneeded */
-alpha:
-	.float 0.5
-notalpha:
-	.float 1.0
-alphainc:
-	.float 0.1
-
-flushy:
-	.asciz  "\n"
-
 

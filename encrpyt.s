@@ -357,9 +357,9 @@ checkSize:
 	stmfd 	sp!, {lr}
 	mov	r2, #4
 
-	mul	r0, r0, r2
+	sdiv	r0, r0, r2
 	cmp	r0, r1
-	movlt	r0, #1
+	movgt	r0, #1
 	blt	endCheck
 	
 	/* Print Error Message */	
@@ -376,7 +376,6 @@ endCheck:
 main:
 	/* r6 Text Read Memory */
 	/* r7 Image Read Memory */
-	/* r8 Secret Message Memory */
 
 	/* Print Image File Name */
 	ldr	r0, =outfmtImageFN	
@@ -441,29 +440,23 @@ errorSize:
 .data
 
 /* System Message */
-syscomm:   	.asciz  "gpicview columns_secret.pgm"
+syscomm:   	.asciz  "gpicview secret.pgm"
 
 /*************************** Constants ***** **********************/
 /* Original Image File */
-imageFile:	.asciz	"columns.pgm"
+imageFile:	.asciz	"EINSTEIN.PGM"
 
 /* Secret Message Text File */
 textFile:	.asciz	"secret.txt"
 
-/* Bit Mask to 127 */
-mask:		.word 0x0000007f
-
-/* Bit mask for last two digits of Word */
-maskTwoDigit:	.word 0xFFFC
-
 /* Image with Secret Message */
-secretImage:	.asciz	"columns_secret.pgm"
-
-/* Stego Message */
-stegoText:	.asciz "stego.txt"
+secretImage:	.asciz	"secret.pgm"
 
 /* Error Message */
 error_msg_size:	.asciz "Error Secret Message File too Large"
+
+/* Bit Mask to 127 */
+mask:		.word 0x0000007f
 
 /********************* In and Out Formats **********************/
 /* Output Format for Image File Name */
@@ -519,12 +512,6 @@ rmode:		.asciz  "rb"
 wmode:		.asciz  "wb"
 
 /********************* Values to Stores **********************/
-/* TODO Char to Retrieve */
-debugNum:	.word 0
-
-/* TODO Char Array */
-charArray:	.space 1000
-
 /* Length of Message */
 msgLength:	.word 0
 
@@ -546,16 +533,4 @@ maxSize:	.word 0
 /* Code for Storing Initial PGM File Parameters */
 code:		.space 3
 		.align 2
-
-/* Perhaps Unneeded */
-alpha:
-	.float 0.5
-notalpha:
-	.float 1.0
-alphainc:
-	.float 0.1
-
-flushy:
-	.asciz  "\n"
-
 
