@@ -32,7 +32,7 @@ insertMessage:
 /* Loop store message length */
 	mov 	r9, #0			/* Msg Length and multiplier */
 	mov	r4, #255
-
+debug6:
 	/* Function Insert First Byte of MsgLength */
 	ldr	r2, =msgLength
 	ldr	r2, [r2]		/* r2 is set to value to store */
@@ -97,11 +97,11 @@ insertByte:
 ibLoop:	
 	/* Load First Byte */
 	ldrb	r0, [r6, r10]		/* Load Byte of Memory */
-	cmp	r0, #32			/* Compare with Space if not space move on */
+	cmp	r0, #32
+	beq	ibSkip	
+	cmp	r0, #10
 	beq	ibSkip
-	cmp	r0, #10			/* Compare with New Line if not new line move onn*/
-	beq	ibSkip
-
+	
 	/* Split Key Value Lower */
 	mov	r9, #252
 	orr	r3, r2, r9		/* Or Key Value with Bit Mask 11111100 */
