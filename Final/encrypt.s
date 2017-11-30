@@ -32,7 +32,7 @@ insertMessage:
 /* Loop store message length */
 	mov 	r9, #0			/* Msg Length and multiplier */
 	mov	r4, #255
-debug6:
+
 	/* Function Insert First Byte of MsgLength */
 	ldr	r2, =msgLength
 	ldr	r2, [r2]		/* r2 is set to value to store */
@@ -97,20 +97,16 @@ insertByte:
 ibLoop:	
 	/* Load First Byte */
 	ldrb	r0, [r6, r10]		/* Load Byte of Memory */
-	cmp	r0, #32
-	beq	ibSkip	
-	cmp	r0, #10
-	beq	ibSkip
-	
+
 	/* Split Key Value Lower */
 	mov	r9, #252
-	orr	r3, r2, r9		/* Or Key Value with Bit Mask 11111100 */
+	orr	r3, r2, r9		/* Or Value with Bit Mask 11111100 */
 		
 	/* Alter last two significant digits of number pulled */
 	mov	r9, #3
 	orr	r0, r0, r9		/* Or Bit Mask with 0011 */
 	
-	and	r0, r0, r3		/* And Bit Mask with Key Value Lower */	
+	and	r0, r0, r3		/* And Bit Mask with Value Lower */	
 
 	/* Store First Byte */
 	strb	r0, [r6, r10]		/* Store Byte Back into Memory */
@@ -164,7 +160,7 @@ writeImage:
 
 	/* Read in Max Value Type */
 	mov  	r0, r4		/* Reload File Pointer Address */
-	ldr  	r1, =outfmtInt
+	ldr  	r1, =outfmtIntMax
 	ldr  	r2, =maxval
 	ldr  	r2, [r2]
 	bl   	fprintf
@@ -217,7 +213,7 @@ readImage:
 
 	/* Read In Max Value Type */
 	mov  	r0, r4
-	ldr  	r1, =infmtInt
+	ldr  	r1, =infmtIntMax
 	ldr  	r2, =maxval
 	bl   	fscanf
 	
@@ -324,7 +320,6 @@ readSecret:
 	mov	r0, r6		/* Set File Pointer */
 	bl	ftell
 
-debug2:
 	mov	r7, r0		/* Save file size to register */
 	ldr	r1, =msgLength	/* Store file size to Data */
 	str	r0, [r1]	
@@ -414,7 +409,7 @@ main:
 	ldr	r0, =infmtS
 	ldr	r1, =textFile
 	bl	scanf
-debug:
+
 	/* Print Secret Text File Name */
 	ldr	r0, =outfmtSecretFN	
 	ldr	r1, =textFile
@@ -536,11 +531,17 @@ outfmtS:		.asciz	"%s\n"
 /* Format for Reading in Integer */
 infmtInt:		.asciz	"%i"
 
+/* Format for Reading in Integer with two trailing newlines */
+infmtIntMax:		.asciz	"%i\n"
+
 /* Format for Reading in Two Integers */
 infmtInt2:		.asciz	"%i %i"
 
 /* Format for Printing Out Integer */
 outfmtInt:		.asciz	"%i\n"
+
+/* Format for Printing Out Integer with two trailing newlines */
+outfmtIntMax:		.asciz	"%i\n\n"
 
 /* Format for Print Out Two Integers */
 outfmtInt2:		.asciz	"%i %i\n"

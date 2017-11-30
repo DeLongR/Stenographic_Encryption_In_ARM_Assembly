@@ -18,7 +18,7 @@ getMessage:
 	mov	r4, r0			/* Store Image Memory Buffer */
 	mov	r5, #0			/* Itterator Image File */
 	mov	r7, #0			/* Storage Memory Address of Text File */
-
+debugGetMsg:
 	/* Parameter: r0 is set to the memory */
 	/* Parameter: r1 is set to the current itterator value */
 	mov	r0, r4			/* Image Memory Buffer */
@@ -28,7 +28,7 @@ getMessage:
 	ldr 	r2, =keyValue
 	strb	r0, [r2]		/* Store Key Value */
 	mov	r5, r1			/* Store Itterator */ 	
-debug66:
+
 	mov	r7, #0			/* local storage for msg length */
 	mov	r8, #0			/* Itterator for get msg */
 getMsg:	
@@ -100,11 +100,7 @@ readByte:
 bLoop:	
 	/* Load First Byte */
 	ldrb	r0, [r2, r1]		/* Load Byte of Memory */
-	mov	r0, #32
-	beq	ibSkip
-	mov	r0, #10
-	beq	ibSkip
-	
+
 	/* Isolate Relevant Bits */
 	mov	r5, #3
 	and	r0, r0, r5		/* And Image Byte with Bit Mask 00000011 */
@@ -158,7 +154,7 @@ readImage:
 
 	/* Read In Max Value Type */
 	mov  	r0, r4
-	ldr  	r1, =infmtInt
+	ldr  	r1, =infmtIntMax
 	ldr  	r2, =maxval
 	bl   	fscanf
 	
@@ -353,6 +349,9 @@ outfmtS:		.asciz	"%s\n"
 
 /* Format for Reading in Integer */
 infmtInt:		.asciz	"%i"
+
+/* Format for Reading in Integer with a Trailing Newline */
+infmtIntMax:		.asciz	"%i\n"
 
 /* Format for Reading in Two Integers */
 infmtInt2:		.asciz	"%i %i"
